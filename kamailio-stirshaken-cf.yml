@@ -270,7 +270,7 @@ Resources:
           #!/bin/bash -x
           export PROJECT_NAME=${ProjectName}
           echo "$(date) - Great success with installation" > /var/log/${!PROJECT_NAME}_install.log
-        - DBHost: !GetAtt MariaDB.Endpoint.Address
+        # - DBHost: !GetAtt MariaDB.Endpoint.Address
   
   AssignRole:
     Type: AWS::IAM::InstanceProfile
@@ -318,35 +318,35 @@ Resources:
       InstanceId: !Ref EC2Instance
       EIP: !Ref IPAddress
 
-  MariaDB:
-    Type: 'AWS::RDS::DBInstance'
-    DependsOn: InstanceAndDBSecurityGroup
-    Properties:
-      DBInstanceIdentifier: kamailiostirshaken
-      DBName: kamailiostirshakendatabase
-      DBInstanceClass: db.t2.micro
-      DBParameterGroupName: !Ref nDBParameterGroup
-      VPCSecurityGroups: 
-        - !GetAtt InstanceAndDBSecurityGroup.GroupId
-      AllocatedStorage: 20
-      Engine: MariaDB
-      EngineVersion: 10.5.13
-      MasterUsername: !Ref DBUsername
-      MasterUserPassword: !Ref DBPassword
-      Tags: 
-        - Key: project
-          Value: !Ref ProjectName
+  # MariaDB:
+  #   Type: 'AWS::RDS::DBInstance'
+  #   DependsOn: InstanceAndDBSecurityGroup
+  #   Properties:
+  #     DBInstanceIdentifier: kamailiostirshaken
+  #     DBName: kamailiostirshakendatabase
+  #     DBInstanceClass: db.t2.micro
+  #     DBParameterGroupName: !Ref nDBParameterGroup
+  #     VPCSecurityGroups: 
+  #       - !GetAtt InstanceAndDBSecurityGroup.GroupId
+  #     AllocatedStorage: 20
+  #     Engine: MariaDB
+  #     EngineVersion: 10.5.13
+  #     MasterUsername: !Ref DBUsername
+  #     MasterUserPassword: !Ref DBPassword
+  #     Tags: 
+  #       - Key: project
+  #         Value: !Ref ProjectName
     
-  nDBParameterGroup:
-    Type: 'AWS::RDS::DBParameterGroup'
-    Properties: 
-      Description: 'Parameter Group w SUPER priv'
-      Family: 'mariadb10.5'
-      Parameters:
-        log_bin_trust_function_creators: '1'
-      Tags: 
-        - Key: Project
-          Value: !Ref ProjectName
+  # nDBParameterGroup:
+  #   Type: 'AWS::RDS::DBParameterGroup'
+  #   Properties: 
+  #     Description: 'Parameter Group w SUPER priv'
+  #     Family: 'mariadb10.5'
+  #     Parameters:
+  #       log_bin_trust_function_creators: '1'
+  #     Tags: 
+  #       - Key: Project
+  #         Value: !Ref ProjectName
   
 Outputs:
   InstanceId:
@@ -355,6 +355,6 @@ Outputs:
   InstanceIPAddress:
     Description: IP address of the newly created EC2 instance
     Value: !Ref IPAddress
-  DatabaseHost:
-    Description: DatabaseHostUrl
-    Value: !GetAtt MariaDB.Endpoint.Address
+  # DatabaseHost:
+  #   Description: DatabaseHostUrl
+  #   Value: !GetAtt MariaDB.Endpoint.Address
