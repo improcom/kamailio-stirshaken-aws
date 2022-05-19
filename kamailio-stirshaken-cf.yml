@@ -1,0 +1,364 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: 'Covid2019-automated-dialer-template. Ubuntu 20.04 LTS'
+
+Parameters:
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.nano
+      - t1.micro
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      - t3.nano
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+    ConstraintDescription: must be a valid EC2 instance type.
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    AllowedPattern: '.+'
+  VPCID:
+    Description: VPC
+    Type: 'AWS::EC2::VPC::Id'
+    ConstraintDescription: must be VPC.
+    AllowedPattern: '.+'
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 72.89.122.10/32
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  HTTPLocation:
+    Description: The IP address range that can be used to access web interface. Use https://whatismyip.com to check your IP
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  SIPSignallingLocation:
+    Description: The IP address range that can be used for signalling SIP traffic.
+    Type: String
+    Default: 74.117.148.0/22
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  # DBName:
+  #   Default: kamailiostirshaken
+  #   Description: Covid2019
+  #   Type: String
+  #   MinLength: '1'
+  #   MaxLength: '64'
+  #   AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+  #   ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  # DBUsername:
+  #   NoEcho: 'true'
+  #   Description: Username for database access
+  #   Type: String
+  #   MinLength: '1'
+  #   MaxLength: '16'
+  #   AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+  #   Default: dbadminUfgehd63
+  #   ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  # DBPassword:
+  #   NoEcho: 'true'
+  #   Description: Password database access
+  #   Type: String
+  #   MinLength: '8'
+  #   MaxLength: '41'
+  #   AllowedPattern: '[a-zA-Z0-9]*'
+  #   Default: databasepasswsW25qbFwpmnx
+  #   ConstraintDescription: must contain only alphanumeric characters.
+  ProjectName:
+    Description: Company name.
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    AllowedPattern: '[-a-zA-Z0-9]*'
+    Default: 'kamailio-stirshaken'
+    ConstraintDescription: must contain only alphanumeric characters.
+
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: HVM64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    m1.small:
+      Arch: HVM64
+    m1.medium:
+      Arch: HVM64
+    m1.large:
+      Arch: HVM64
+    m1.xlarge:
+      Arch: HVM64
+    m2.xlarge:
+      Arch: HVM64
+    m2.2xlarge:
+      Arch: HVM64
+    m2.4xlarge:
+      Arch: HVM64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2xlarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2xlarge:
+      Arch: HVM64
+    m4.4xlarge:
+      Arch: HVM64
+    m4.10xlarge:
+      Arch: HVM64
+    c1.medium:
+      Arch: HVM64
+    c1.xlarge:
+      Arch: HVM64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2xlarge:
+      Arch: HVM64
+    c3.4xlarge:
+      Arch: HVM64
+    c3.8xlarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2xlarge:
+      Arch: HVM64
+    c4.4xlarge:
+      Arch: HVM64
+    c4.8xlarge:
+      Arch: HVM64
+    g2.2xlarge:
+      Arch: HVMG2
+    g2.8xlarge:
+      Arch: HVMG2
+    r3.large:
+      Arch: HVM64
+    r3.xlarge:
+      Arch: HVM64
+    r3.2xlarge:
+      Arch: HVM64
+    r3.4xlarge:
+      Arch: HVM64
+    r3.8xlarge:
+      Arch: HVM64
+    i2.xlarge:
+      Arch: HVM64
+    i2.2xlarge:
+      Arch: HVM64
+    i2.4xlarge:
+      Arch: HVM64
+    i2.8xlarge:
+      Arch: HVM64
+    d2.xlarge:
+      Arch: HVM64
+    d2.2xlarge:
+      Arch: HVM64
+    d2.4xlarge:
+      Arch: HVM64
+    d2.8xlarge:
+      Arch: HVM64
+    hi1.4xlarge:
+      Arch: HVM64
+    hs1.8xlarge:
+      Arch: HVM64
+    cr1.8xlarge:
+      Arch: HVM64
+    cc2.8xlarge:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-04505e74c0741db8d
+    us-east-2:
+      HVM64: ami-0fb653ca2d3203ac1
+      HVMG2: NOT_SUPPORTED
+    us-west-1:
+      HVM64: ami-01f87c43e618bf8f0
+    us-west-2:
+      HVM64: ami-0892d3c7ee96c0bf7
+
+Resources:
+  IAMRole4EC2:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: SESAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "SES:SendEmail"
+                  - "SES:SendRawEmail"
+                Resource:
+                  - !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity:*"
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+      # - MariaDB
+      - InstanceAndDBSecurityGroup
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 10
+            VolumeType: gp2
+            DeleteOnTermination: true
+      ImageId: !FindInMap
+               - AWSRegionArch2AMI
+               - !Ref 'AWS::Region'
+               - !FindInMap
+                 - AWSInstanceType2Arch
+                 - !Ref InstanceType
+                 - Arch
+      SecurityGroupIds:
+        - !GetAtt InstanceAndDBSecurityGroup.GroupId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref AssignRole
+      Tags: 
+          - Key: Name
+            Value: !Ref ProjectName
+          - Key: Project
+            Value: !Ref ProjectName
+          - Key: Environment
+            Value: development
+      Tenancy: default
+      UserData:
+        Fn::Base64: !Sub
+        - |
+          #!/bin/bash -x
+          # export DBNAME=${DBName}
+          # export DBUSER=${DBUsername}
+          # export DBPASS=${DBPassword}
+          # export DBHOST=${DBHost}
+          export PROJECT_NAME=${ProjectName}
+          echo "$(date) - Great success with installation" > /var/log/${!PROJECT_NAME}_install.log
+        - DBHost: !GetAtt MariaDB.Endpoint.Address
+  
+  AssignRole:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Roles: 
+        - !Ref IAMRole4EC2
+
+  InstanceAndDBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref SSHLocation
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref HTTPLocation
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref HTTPLocation
+        - IpProtocol: udp
+          FromPort: '5060'
+          ToPort: '5060'
+          CidrIp: !Ref SIPSignallingLocation
+
+  SecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref InstanceAndDBSecurityGroup
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !GetAtt InstanceAndDBSecurityGroup.GroupId 
+      
+  IPAddress:
+    Type: 'AWS::EC2::EIP'
+  IPAssoc:
+    Type: 'AWS::EC2::EIPAssociation'
+    Properties:
+      InstanceId: !Ref EC2Instance
+      EIP: !Ref IPAddress
+
+  MariaDB:
+    Type: 'AWS::RDS::DBInstance'
+    DependsOn: InstanceAndDBSecurityGroup
+    Properties:
+      DBInstanceIdentifier: kamailiostirshaken
+      DBName: kamailiostirshakendatabase
+      DBInstanceClass: db.t2.micro
+      DBParameterGroupName: !Ref nDBParameterGroup
+      VPCSecurityGroups: 
+        - !GetAtt InstanceAndDBSecurityGroup.GroupId
+      AllocatedStorage: 20
+      Engine: MariaDB
+      EngineVersion: 10.5.13
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      Tags: 
+        - Key: project
+          Value: !Ref ProjectName
+    
+  nDBParameterGroup:
+    Type: 'AWS::RDS::DBParameterGroup'
+    Properties: 
+      Description: 'Parameter Group w SUPER priv'
+      Family: 'mariadb10.5'
+      Parameters:
+        log_bin_trust_function_creators: '1'
+      Tags: 
+        - Key: Project
+          Value: !Ref ProjectName
+  
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref EC2Instance
+  InstanceIPAddress:
+    Description: IP address of the newly created EC2 instance
+    Value: !Ref IPAddress
+  DatabaseHost:
+    Description: DatabaseHostUrl
+    Value: !GetAtt MariaDB.Endpoint.Address
