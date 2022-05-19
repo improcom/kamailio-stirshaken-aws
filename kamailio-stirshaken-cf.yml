@@ -268,10 +268,6 @@ Resources:
         Fn::Base64: !Sub
         - |
           #!/bin/bash -x
-          # export DBNAME=${DBName}
-          # export DBUSER=${DBUsername}
-          # export DBPASS=${DBPassword}
-          # export DBHOST=${DBHost}
           export PROJECT_NAME=${ProjectName}
           echo "$(date) - Great success with installation" > /var/log/${!PROJECT_NAME}_install.log
         - DBHost: !GetAtt MariaDB.Endpoint.Address
