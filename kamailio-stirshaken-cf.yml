@@ -265,8 +265,7 @@ Resources:
             Value: development
       Tenancy: default
       UserData:
-        Fn::Base64: !Sub
-        - |
+        Fn::Base64: !Sub |
           #!/bin/bash -x
           export PROJECT_NAME=${ProjectName}
           echo "$(date) - Great success with installation" > /var/log/${!PROJECT_NAME}_install.log
