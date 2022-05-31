@@ -54,6 +54,29 @@ Parameters:
     Default: 74.117.148.0/22
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  SIPTerminatingLocation:
+    Description: The IP address range that can be used for signalling SIP traffic.
+    Type: String
+    Default: 64.2.142.93/32
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/32'
+    ConstraintDescription: must be a valid IP address of terminating ISP of the form x.x.x.x/32.
+  PublicIPAddress:
+    Description: The IP address to assign on EC2.
+    Type: String
+    Default: 74.117.149.55
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})'
+    ConstraintDescription: must be a valid IP address.
+  TagName4EC2:
+    Description: The IP address to assign on EC2.
+    Type: String
+    Default: kamailio-stir-shaken
+    AllowedPattern: '.+'
+    ConstraintDescription: must be an alfanumeric name. Will be used as Tag:Name and hostname
+  RepoAddress:
+    Description: Address of repository from where the source code should be downloaded. Leave it to default
+    Type: String
+    Default: https://github.com/olegromanchuk/kamailio-stirshaken-aws.git
+
   # DBName:
   #   Default: kamailiostirshaken
   #   Description: Covid2019
@@ -71,15 +94,15 @@ Parameters:
   #   AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
   #   Default: dbadminUfgehd63
   #   ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
-  # DBPassword:
-  #   NoEcho: 'true'
-  #   Description: Password database access
-  #   Type: String
-  #   MinLength: '8'
-  #   MaxLength: '41'
-  #   AllowedPattern: '[a-zA-Z0-9]*'
-  #   Default: databasepasswsW25qbFwpmnx
-  #   ConstraintDescription: must contain only alphanumeric characters.
+  DBPassword:
+    NoEcho: 'true'
+    Description: Password database access
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: Neptune2984
+    ConstraintDescription: must contain only alphanumeric characters.
   ProjectName:
     Description: Company name.
     Type: String
@@ -199,14 +222,13 @@ Mappings:
       Arch: HVM64
   AWSRegionArch2AMI:
     us-east-1:
-      HVM64: ami-04505e74c0741db8d
+      HVM64: ami-09d56f8956ab235b3
     us-east-2:
-      HVM64: ami-0fb653ca2d3203ac1
-      HVMG2: NOT_SUPPORTED
+      HVM64: ami-0aeb7c931a5a61206
     us-west-1:
-      HVM64: ami-01f87c43e618bf8f0
+      HVM64: ami-0dc5e9ff792ec08e3
     us-west-2:
-      HVM64: ami-0892d3c7ee96c0bf7
+      HVM64: ami-0ee8244746ec5d6d4
 
 Resources:
   IAMRole4EC2:
@@ -258,7 +280,7 @@ Resources:
       IamInstanceProfile: !Ref AssignRole
       Tags: 
           - Key: Name
-            Value: !Ref ProjectName
+            Value: !Ref TagName4EC2
           - Key: Project
             Value: !Ref ProjectName
           - Key: Environment
@@ -266,9 +288,115 @@ Resources:
       Tenancy: default
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/bash -x
+          #!/bin/bash -xe
           export PROJECT_NAME=${ProjectName}
-          echo "$(date) - Great success with installation" > /var/log/${!PROJECT_NAME}_install.log
+          export KAMAILIO_VERSION=5.6.0
+
+          LOCAL_IPV4=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
+          PUBLIC_IPV4=${PublicIPAddress}
+
+          echo "$(date) - Kamailio install started" > /var/log/${!PROJECT_NAME}_install.log
+          hostname ${TagName4EC2}
+          echo ${TagName4EC2} > /etc/hostname
+
+          apt update
+          apt-get install mysql-server -y
+
+          apt-get install secsipidx libsecsipid-dev -y
+
+
+          # echo "install kamailio from packages"
+          # apt-get install kamailio* -y //TODO - install only necessary modules
+
+
+          echo "installing dependencies for kamailio source code"
+          apt-get install build-essential bison flex pkg-config libpcre3-dev libxml2-dev libcurl4-openssl-dev libssl-dev make libmysqlclient-dev gcc g++ -y
+          cd /usr/local/src/
+
+          echo "installing kamailio source code"
+          git clone https://github.com/kamailio/kamailio.git
+          cd kamailio
+          git checkout ${!KAMAILIO_VERSION}
+
+
+          cd /usr/local/src/
+          echo "installing golang"
+          wget https://go.dev/dl/go1.18.2.linux-amd64.tar.gz
+          rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.2.linux-amd64.tar.gz
+          export PATH=$PATH:/usr/local/go/bin
+          export GOPATH=/root/go
+          echo "PATH=$PATH:/usr/local/go/bin" >> /root/.bashrc
+          echo "export GOPATH=/root/go" >> /root/.bashrc
+          
+          echo "installing secsipid"
+          GO111MODULE=off go get github.com/asipto/secsipidx
+          cd $GOPATH/src/github.com/asipto/secsipidx
+          make
+          make install
+          cd csecsipid
+
+          echo "generating c headers and modules for kamailio"
+          make liba
+          cp secsipid.h libsecsipid.h libsecsipid.a /usr/local/src/kamailio/src/modules/secsipid_proc/
+
+
+          echo "making secsipid module for kamailio"
+          cd /usr/local/src/kamailio/
+          make cfg
+          make PREFIX="/usr/local/kamailio-${!KAMAILIO_VERSION}" include_modules="db_mysql dialplan secsipid_proc secsipid auth_identity" cfg
+          make all
+          make install
+          make install-systemd-debian
+
+
+          echo "Download kamailio cfg and updating template values"
+          cd /usr/local/src/
+          git clone ${RepoAddress} kamailio-stirshaken-aws
+          cd kamailio-stirshaken-aws
+          cp -prf kamailio_v${!KAMAILIO_VERSION}.cfg /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamailio.cfg
+
+
+          echo "get vars from CF template"
+          SIP_SIGNALLING_LOCATION1_IP=echo {SIPSignallingLocation} | awk -F "/" '{print $1}'
+          SIP_SIGNALLING_LOCATION1_MASK=echo {SIPSignallingLocation} | awk -F "/" '{print $2}'
+          SIP_TERMINATING_LOCATION_IP=echo {SIPTerminatingLocation} | awk -F "/" '{print $1}'
+          SIP_TERMINATING_LOCATION_MASK=echo {SIPTerminatingLocation} | awk -F "/" '{print $2}'
+
+
+          echo "$(date) creating kamailio db"
+          # echo "CREATE USER 'kamailio'@'localhost' IDENTIFIED BY '${DBPassword}';" | mysql
+          # echo "GRANT ALL PRIVILEGES ON * . * TO 'kamailio'@'localhost';" | mysql
+          # echo "FLUSH PRIVILEGES;" | mysql
+          perl -pi -e "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/" kamctlrc
+          perl -pi -e "s/# DBRWUSER=\"kamailio\"/DBRWUSER=\"kamailio\"/" kamctlrc
+          perl -pi -e "s/# DBRWPW=\"kamailiorw\"/DBRWPW=\"${DBPassword}\"/" kamctlrc
+
+          perl -pi -e "s/ISP_ADDRESS_TEMPLATE/SIP_TERMINATING_LOCATION_IP/" kamctlrc
+          perl -pi -e "s/PRIVATE_IP_TEMPLATE/LOCAL_IPV4/" kamctlrc
+          perl -pi -e "s/PUBLIC_IP_TEMPLATE/PUBLIC_IPV4/" kamctlrc
+          kamdbctl create
+
+
+          echo "configuring kamailio - post-install"
+          kamctl address add 200 $!{SIP_SIGNALLING_LOCATION1_IP} ${!SIP_SIGNALLING_LOCATION1_MASK} 5060 "location1"
+          kamctl address add 200 $!{SIP_TERMINATING_LOCATION_IP} 32 5060 "location2"
+
+          
+          echo "generating ssl keys for secsipidx"
+          cd /usr/local/kamailio-${!KAMAILIO_VERSION}
+          mkdir stirshakendata
+          cd stirshakendata
+          openssl ecparam -name prime256v1 -genkey -noout -out ec256-private.pem
+          openssl ec -in ec256-private.pem -pubout -out ec256-public.pem
+          chown kamailio:kamailio *
+
+          systemctl enable kamailio
+          systemctl start kamailio
+
+          apt install 
+
+
+
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
   
   AssignRole:
@@ -299,6 +427,10 @@ Resources:
           FromPort: '5060'
           ToPort: '5060'
           CidrIp: !Ref SIPSignallingLocation
+        - IpProtocol: udp
+          FromPort: '5060'
+          ToPort: '5060'
+          CidrIp: !Ref SIPTerminatingLocation
 
   SecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -309,13 +441,11 @@ Resources:
       ToPort: 3306
       SourceSecurityGroupId: !GetAtt InstanceAndDBSecurityGroup.GroupId 
       
-  IPAddress:
-    Type: 'AWS::EC2::EIP'
   IPAssoc:
     Type: 'AWS::EC2::EIPAssociation'
     Properties:
       InstanceId: !Ref EC2Instance
-      EIP: !Ref IPAddress
+      EIP: !Ref PublicIPAddress
 
   # MariaDB:
   #   Type: 'AWS::RDS::DBInstance'
@@ -351,9 +481,6 @@ Outputs:
   InstanceId:
     Description: InstanceId of the newly created EC2 instance
     Value: !Ref EC2Instance
-  InstanceIPAddress:
-    Description: IP address of the newly created EC2 instance
-    Value: !Ref IPAddress
   # DatabaseHost:
   #   Description: DatabaseHostUrl
   #   Value: !GetAtt MariaDB.Endpoint.Address
