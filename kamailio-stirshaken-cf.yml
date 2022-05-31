@@ -325,7 +325,7 @@ Resources:
           rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.2.linux-amd64.tar.gz
           export PATH=$PATH:/usr/local/go/bin
           export GOPATH=/root/go
-          echo "PATH=$PATH:/usr/local/go/bin" >> /root/.bashrc
+          export HOME=/root  #we need it for go build.
           echo "export GOPATH=/root/go" >> /root/.bashrc
           
           echo "installing secsipid"
@@ -348,33 +348,40 @@ Resources:
           make install
           make install-systemd-debian
 
+          # export path
+          echo "PATH=$PATH:/usr/local/go/bin:/usr/local/kamailio-${!KAMAILIO_VERSION}/sbin" >> /root/.bashrc
+
 
           echo "Download kamailio cfg and updating template values"
           cd /usr/local/src/
           git clone ${RepoAddress} kamailio-stirshaken-aws
           cd kamailio-stirshaken-aws
           cp -prf kamailio_v${!KAMAILIO_VERSION}.cfg /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamailio.cfg
-
+          cp -prf kamctlrc /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamctlrc
 
           echo "get vars from CF template"
-          SIP_SIGNALLING_LOCATION1_IP=echo {SIPSignallingLocation} | awk -F "/" '{print $1}'
-          SIP_SIGNALLING_LOCATION1_MASK=echo {SIPSignallingLocation} | awk -F "/" '{print $2}'
-          SIP_TERMINATING_LOCATION_IP=echo {SIPTerminatingLocation} | awk -F "/" '{print $1}'
-          SIP_TERMINATING_LOCATION_MASK=echo {SIPTerminatingLocation} | awk -F "/" '{print $2}'
+          SIP_SIGNALLING_LOCATION1_IP=echo ${SIPSignallingLocation} | awk -F "/" '{print $1}'
+          SIP_SIGNALLING_LOCATION1_MASK=echo ${SIPSignallingLocation} | awk -F "/" '{print $2}'
+          SIP_TERMINATING_LOCATION_IP=echo ${SIPTerminatingLocation} | awk -F "/" '{print $1}'
+          SIP_TERMINATING_LOCATION_MASK=echo ${SIPTerminatingLocation} | awk -F "/" '{print $2}'
 
 
           echo "$(date) creating kamailio db"
           # echo "CREATE USER 'kamailio'@'localhost' IDENTIFIED BY '${DBPassword}';" | mysql
           # echo "GRANT ALL PRIVILEGES ON * . * TO 'kamailio'@'localhost';" | mysql
           # echo "FLUSH PRIVILEGES;" | mysql
+
+          cd /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/
           perl -pi -e "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/" kamctlrc
           perl -pi -e "s/# DBRWUSER=\"kamailio\"/DBRWUSER=\"kamailio\"/" kamctlrc
           perl -pi -e "s/# DBRWPW=\"kamailiorw\"/DBRWPW=\"${DBPassword}\"/" kamctlrc
 
-          perl -pi -e "s/ISP_ADDRESS_TEMPLATE/SIP_TERMINATING_LOCATION_IP/" kamctlrc
-          perl -pi -e "s/PRIVATE_IP_TEMPLATE/LOCAL_IPV4/" kamctlrc
-          perl -pi -e "s/PUBLIC_IP_TEMPLATE/PUBLIC_IPV4/" kamctlrc
-          kamdbctl create
+          perl -pi -e "s/ISP_ADDRESS_TEMPLATE/SIP_TERMINATING_LOCATION_IP/" kamailio.cfg
+          perl -pi -e "s/PRIVATE_IP_TEMPLATE/LOCAL_IPV4/" kamailio.cfg
+          perl -pi -e "s/PUBLIC_IP_TEMPLATE/PUBLIC_IPV4/" kamailio.cfg
+          perl -pi -e "s|#!trydef DBURL \"mysql://kamailio:kamailiorw@localhost/kamailio\"|#!define DBURL \"mysql://kamailio:${DBPassword}@localhost/kamailio\"|" kamailio.cfg
+
+          /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamdbctl create
 
 
           echo "configuring kamailio - post-install"
@@ -392,8 +399,6 @@ Resources:
 
           systemctl enable kamailio
           systemctl start kamailio
-
-          apt install 
 
 
 
