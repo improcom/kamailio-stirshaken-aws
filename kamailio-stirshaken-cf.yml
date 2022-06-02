@@ -414,10 +414,8 @@ Resources:
           /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamctl address add 200 ${!SIP_TERMINATING_LOCATION_IP} 32 5060 "location2"
 
           
-
           systemctl enable kamailio
           systemctl start kamailio
-
 
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
