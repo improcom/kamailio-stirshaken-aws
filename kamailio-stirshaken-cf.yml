@@ -69,7 +69,7 @@ Parameters:
   PublicIPAddress:
     Description: The IP address to assign on EC2.
     Type: String
-    Default: 74.117.149.55
+    Default: 35.84.253.234
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})'
     ConstraintDescription: must be a valid IP address.
   TagName4EC2:
@@ -78,10 +78,14 @@ Parameters:
     Default: kamailio-stir-shaken
     AllowedPattern: '.+'
     ConstraintDescription: must be an alfanumeric name. Will be used as Tag:Name and hostname
-  RepoAddress:
+  RepoAddressKamailio:
     Description: Address of repository from where the source code should be downloaded. Leave it to default
     Type: String
     Default: https://github.com/olegromanchuk/kamailio-stirshaken-aws.git
+  RepoAddressSecsipid:
+    Description: TMP!!! Address of repository from where the source code of secsipidx should be downloaded. Leave it to default. Is needed until the transnexus part is merged into main repo.
+    Type: String
+    Default: github.com/olegromanchuk/secsipidx
 
   # DBName:
   #   Default: kamailiostirshaken
@@ -117,6 +121,18 @@ Parameters:
     AllowedPattern: '[-a-zA-Z0-9]*'
     Default: 'kamailio-stirshaken'
     ConstraintDescription: must contain only alphanumeric characters.
+  CertificateProviderURL:
+    Description: URL of certificate provider API. https://api.ca.transnexus.com/certificates/request
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: 'https://38155eda-a57e-430a-b8d1-9441e91180d3.mock.pstmn.io/certificates/request'
+  CertificateAuthorityToken:
+    Description: Certificate authority token
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: 'mySecureTokenForGeneratingCertificate'
 
 Mappings:
   AWSInstanceType2Arch:
@@ -295,8 +311,17 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
+
+          echo "creating script for env variables"
+          cat > /etc/profile.d/load_env.sh << 'EOF'
           export PROJECT_NAME=${ProjectName}
           export KAMAILIO_VERSION=5.6.0
+          export CERTIFICATE_PROVIDER=TransNexus
+          export CERTIFICATE_PROVIDER_URL=${CertificateProviderURL}
+          export CERTIFICATE_AUTHORITY_TOKEN=${CertificateAuthorityToken}
+          EOF
+          chmod a+x /etc/profile.d/load_env.sh
+          source /etc/profile.d/load_env.sh
 
           LOCAL_IPV4=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
           PUBLIC_IPV4=${PublicIPAddress}
@@ -335,8 +360,8 @@ Resources:
           echo "export GOPATH=/root/go" >> /root/.bashrc
           
           echo "installing secsipid"
-          GO111MODULE=off go get github.com/asipto/secsipidx
-          cd $GOPATH/src/github.com/asipto/secsipidx
+          GO111MODULE=off go get ${RepoAddressSecsipid}
+          cd $GOPATH/src/${RepoAddressSecsipid}
           make
           make install
           cd csecsipid
