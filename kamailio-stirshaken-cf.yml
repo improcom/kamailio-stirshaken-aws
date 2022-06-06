@@ -133,6 +133,40 @@ Parameters:
     MinLength: '1'
     MaxLength: '255'
     Default: 'mySecureTokenForGeneratingCertificate'
+  PrivateKeyPath:
+    Description: Path to ssh private key. Used to generate STIR/SHAKEN certificate.
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: '/usr/local/kamailio-5.6.0/stirshakendata/ec256-private.pem'
+  STIRSHAKENcaEmail:
+    Description: Email for StirShaken certificate.
+    Type: String
+    Default: admin@examplecompany.com
+  STIRSHAKENcaDomain:
+    Description: Domain for StirShaken certificate.
+    Type: String
+    Default: examplecompany.com
+  STIRSHAKENcaCountry:
+    Description: Country for StirShaken certificate.
+    Type: String
+    Default: US
+  STIRSHAKENcaProvince:
+    Description: Province for StirShaken certificate.
+    Type: String
+    Default: NY
+  STIRSHAKENcaLocality:
+    Description: Locality for StirShaken certificate.
+    Type: String
+    Default: New-York
+  STIRSHAKENcaOrganization:
+    Description: Organization for StirShaken certificate.
+    Type: String
+    Default: Example Company INC
+  STIRSHAKENcaOrgUnit:
+    Description: Organization Unit for StirShaken certificate.
+    Type: String
+    Default: IT
 
 Mappings:
   AWSInstanceType2Arch:
@@ -319,6 +353,14 @@ Resources:
           export CERTIFICATE_PROVIDER=TransNexus
           export CERTIFICATE_PROVIDER_URL=${CertificateProviderURL}
           export CERTIFICATE_AUTHORITY_TOKEN=${CertificateAuthorityToken}
+          export PRIVATE_KEY_PATH=${PrivateKeyPath}
+          export EMAIL_4_CSR=${STIRSHAKENcaEmail}
+          export DOMAIN_4_CSR=${STIRSHAKENcaDomain}
+          export COUNTRY_4_CSR=${STIRSHAKENcaCountry}
+          export PROVINCE_4_CSR=${STIRSHAKENcaProvince}
+          export LOCALITY_4_CSR=${STIRSHAKENcaLocality}
+          export ORGANIZATION_4_CSR=${STIRSHAKENcaOrganization}
+          export ORGUNIT_4_CSR=${STIRSHAKENcaOrgUnit}
           EOF
           chmod a+x /etc/profile.d/load_env.sh
           source /etc/profile.d/load_env.sh
@@ -333,7 +375,7 @@ Resources:
           apt update
           apt-get install mysql-server -y
 
-          apt-get install secsipidx libsecsipid-dev ngrep -y
+          apt-get install secsipidx libsecsipid-dev ngrep jq -y
 
 
           # echo "install kamailio from packages"
@@ -385,7 +427,7 @@ Resources:
 
           echo "Download kamailio cfg and updating template values"
           cd /usr/local/src/
-          git clone ${RepoAddress} kamailio-stirshaken-aws
+          git clone ${RepoAddressKamailio} kamailio-stirshaken-aws
           cd kamailio-stirshaken-aws
           cp -prf kamailio_v${!KAMAILIO_VERSION}.cfg /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamailio.cfg
           cp -prf kamctlrc /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamctlrc
@@ -424,6 +466,11 @@ Resources:
           cd stirshakendata
           openssl ecparam -name prime256v1 -genkey -noout -out ec256-private.pem
           openssl ec -in ec256-private.pem -pubout -out ec256-public.pem
+
+          echo "generating certificate request and getting certificate from CERTIFICATE PROVIDER"
+          CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
+          perl -pi -e "s/CERTIFICATE_URL_TEMPLATE/${!CERTIFICATE_URL}/" kamailio.cfg
+          perl -pi -e "s/PRIVATE_KEY_PATH_TEMPLATE/${!PRIVATE_KEY_PATH}/" kamailio.cfg
           chown kamailio:kamailio *
 
 
