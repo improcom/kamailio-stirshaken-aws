@@ -40,6 +40,14 @@ Parameters:
     Default: 72.89.122.10/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  SSHLocation2:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 108.46.212.216/32
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   # HTTPLocation:
   #   Description: The IP address range that can be used to access web interface. Use https://whatismyip.com to check your IP
   #   Type: String
@@ -466,15 +474,16 @@ Resources:
           cd stirshakendata
           openssl ecparam -name prime256v1 -genkey -noout -out ec256-private.pem
           openssl ec -in ec256-private.pem -pubout -out ec256-public.pem
+          chown kamailio:kamailio *
 
           echo "generating certificate request and getting certificate from CERTIFICATE PROVIDER"
+          cd /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/
           CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
-          # if [[ ${!?} -ne 0 ]]; then
-          #   echo "$(date) - Kamailio install started" > /var/log/${!PROJECT_NAME}_install.log
-          # fi
-          perl -pi -e "s/CERTIFICATE_URL_TEMPLATE/${!CERTIFICATE_URL}/" kamailio.cfg
-          perl -pi -e "s/PRIVATE_KEY_PATH_TEMPLATE/${!PRIVATE_KEY_PATH_4_CSR}/" kamailio.cfg
-          chown kamailio:kamailio *
+          if [[ $? -ne 0 ]]; then
+            echo "$(date) - Cannot get certificate" > /var/log/${!PROJECT_NAME}_install.log
+          fi
+          perl -pi -e "s|CERTIFICATE_URL_TEMPLATE|${!CERTIFICATE_URL}|" kamailio.cfg
+          perl -pi -e "s|PRIVATE_KEY_PATH_TEMPLATE|${!PRIVATE_KEY_PATH_4_CSR}|" kamailio.cfg
 
 
           echo "configuring kamailio - post-install"
@@ -511,6 +520,10 @@ Resources:
           FromPort: '22'
           ToPort: '22'
           CidrIp: !Ref SSHLocation
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref SSHLocation2
         # - IpProtocol: tcp
         #   FromPort: '80'
         #   ToPort: '80'
