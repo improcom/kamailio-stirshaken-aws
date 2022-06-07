@@ -353,7 +353,7 @@ Resources:
           export CERTIFICATE_PROVIDER=TransNexus
           export CERTIFICATE_PROVIDER_URL=${CertificateProviderURL}
           export CERTIFICATE_AUTHORITY_TOKEN=${CertificateAuthorityToken}
-          export PRIVATE_KEY_PATH=${PrivateKeyPath}
+          export PRIVATE_KEY_PATH_4_CSR=${PrivateKeyPath}
           export EMAIL_4_CSR=${STIRSHAKENcaEmail}
           export DOMAIN_4_CSR=${STIRSHAKENcaDomain}
           export COUNTRY_4_CSR=${STIRSHAKENcaCountry}
@@ -469,8 +469,11 @@ Resources:
 
           echo "generating certificate request and getting certificate from CERTIFICATE PROVIDER"
           CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
+          # if [[ ${!?} -ne 0 ]]; then
+          #   echo "$(date) - Kamailio install started" > /var/log/${!PROJECT_NAME}_install.log
+          # fi
           perl -pi -e "s/CERTIFICATE_URL_TEMPLATE/${!CERTIFICATE_URL}/" kamailio.cfg
-          perl -pi -e "s/PRIVATE_KEY_PATH_TEMPLATE/${!PRIVATE_KEY_PATH}/" kamailio.cfg
+          perl -pi -e "s/PRIVATE_KEY_PATH_TEMPLATE/${!PRIVATE_KEY_PATH_4_CSR}/" kamailio.cfg
           chown kamailio:kamailio *
 
 
