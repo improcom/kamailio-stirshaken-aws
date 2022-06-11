@@ -18,5 +18,9 @@ This project installs kamailio with STIR/SHAKEN module
 
 
 
-#### API mock
-https://impropublic.s3.us-east-2.amazonaws.com/api_mock_4_stirshaken_secsipidx.html
+#### API mock for transnexus
+https://38155eda-a57e-430a-b8d1-9441e91180d3.mock.pstmn.io
+
+
+## Cloudformation script parameters
+PublicIPAddress - elastic IP address. 

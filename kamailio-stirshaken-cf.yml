@@ -37,7 +37,7 @@ Parameters:
     Type: String
     MinLength: '9'
     MaxLength: '18'
-    Default: 72.89.122.10/32
+    Default: IP_ADDRESS_SSH1/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SSHLocation2:
@@ -45,7 +45,7 @@ Parameters:
     Type: String
     MinLength: '9'
     MaxLength: '18'
-    Default: 108.46.212.216/32
+    Default: IP_ADDRESS_SSH2/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   # HTTPLocation:
@@ -59,27 +59,27 @@ Parameters:
   SIPSignallingLocation:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
-    Default: 74.117.148.0/22
+    Default: IP_ADDRESS_SIP_SIGNALLING1
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SIPSignallingLocation2:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
-    Default: 34.224.43.195/32
+    Default: IP_ADDRESS_SIP_SIGNALLING2
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SIPTerminatingLocation:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
-    Default: 64.2.142.93/32
+    Default: IP_ADDRESS_SIP_PROVIDER
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/32'
     ConstraintDescription: must be a valid IP address of terminating ISP of the form x.x.x.x/32.
   PublicIPAddress:
-    Description: The IP address to assign on EC2.
+    Description: The IP address to assign on this EC2. You must have one free elastic IP for this host.
     Type: String
-    Default: 35.84.253.234
+    Default: IP_ADDRESS_PUBLIC_THIS_HOST
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})'
-    ConstraintDescription: must be a valid IP address.
+    ConstraintDescription: must be a valid public elastic IP address in EC2.
   TagName4EC2:
     Description: The IP address to assign on EC2.
     Type: String
@@ -89,7 +89,7 @@ Parameters:
   RepoAddressKamailio:
     Description: Address of repository from where the source code should be downloaded. Leave it to default
     Type: String
-    Default: https://github.com/olegromanchuk/kamailio-stirshaken-aws.git
+    Default: https://github.com/improcom/kamailio-stirshaken-aws.git
   RepoAddressSecsipid:
     Description: TMP!!! Address of repository from where the source code of secsipidx should be downloaded. Leave it to default. Is needed until the transnexus part is merged into main repo.
     Type: String
