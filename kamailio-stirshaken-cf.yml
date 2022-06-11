@@ -437,8 +437,8 @@ Resources:
           cd /usr/local/src/
           git clone ${RepoAddressKamailio} kamailio-stirshaken-aws
           cd kamailio-stirshaken-aws
-          cp -prf kamailio_v${!KAMAILIO_VERSION}.cfg /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamailio.cfg
-          cp -prf kamctlrc /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamctlrc
+          cp -prf conf/kamailio_v${!KAMAILIO_VERSION}.cfg /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamailio.cfg
+          cp -prf conf/kamctlrc /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/kamctlrc
 
           echo "get vars from CF template"
           SIP_SIGNALLING_LOCATION1_IP=$( echo ${SIPSignallingLocation} | awk -F "/" '{print $1}' )
