@@ -37,7 +37,7 @@ Parameters:
     Type: String
     MinLength: '9'
     MaxLength: '18'
-    Default: IP_ADDRESS_SSH1/32
+    Default: 1.1.1.1/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SSHLocation2:
@@ -45,7 +45,7 @@ Parameters:
     Type: String
     MinLength: '9'
     MaxLength: '18'
-    Default: IP_ADDRESS_SSH2/32
+    Default: 2.2.2.2/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   # HTTPLocation:
@@ -59,25 +59,25 @@ Parameters:
   SIPSignallingLocation:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
-    Default: IP_ADDRESS_SIP_SIGNALLING1
+    Default: 3.3.3.3/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SIPSignallingLocation2:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
-    Default: IP_ADDRESS_SIP_SIGNALLING2
+    Default: 4.4.4.4/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SIPTerminatingLocation:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
-    Default: IP_ADDRESS_SIP_PROVIDER
+    Default: 5.5.5.5/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/32'
     ConstraintDescription: must be a valid IP address of terminating ISP of the form x.x.x.x/32.
   PublicIPAddress:
     Description: The IP address to assign on this EC2. You must have one free elastic IP for this host.
     Type: String
-    Default: IP_ADDRESS_PUBLIC_THIS_HOST
+    Default: 6.6.6.6
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})'
     ConstraintDescription: must be a valid public elastic IP address in EC2.
   TagName4EC2:
