@@ -48,14 +48,14 @@ Parameters:
     Default: 2.2.2.2/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
-  # HTTPLocation:
-  #   Description: The IP address range that can be used to access web interface. Use https://whatismyip.com to check your IP
-  #   Type: String
-  #   MinLength: '9'
-  #   MaxLength: '18'
-  #   Default: 0.0.0.0/0
-  #   AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-  #   ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  HTTPLocation:
+    Description: The IP address range that can be used to access web interface. Use https://whatismyip.com to check your IP
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 7.7.7.7/32
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   SIPSignallingLocation:
     Description: The IP address range that can be used for signalling SIP traffic.
     Type: String
@@ -508,7 +508,9 @@ Resources:
           apt update
           apt install php7.4 php7.4-fpm php7.4-common libapache2-mod-fcgid php7.4-cli php7.4-mysqlnd php7.4-xml php7.4-xmlrpc libapache2-mod-php7.4 php7.4-curl php7.4-gd php7.4-mbstring -y
 
-          a2enmod proxy_fcgi setenvif && sudo a2enconf php7.4-fpm rewrite
+          a2enmod proxy_fcgi setenvif
+          a2enconf php7.4-fpm
+          a2enmod rewrite
           cd /var/www/html/
           git clone https://github.com/asipto/siremis kamailio
           cd kamailio
@@ -522,6 +524,8 @@ Resources:
           echo "GRANT ALL ON siremis.* TO 'siremis'@'localhost'" | mysql
           echo "FLUSH PRIVILEGES" | mysql
 
+          echo "Creating drouting DB"
+          cat /usr/local/src/kamailio/utils/kamctl/mysql/drouting-create.sql | mysql kamailio
           #rm -rf /var/www/html/kamailio/siremis/install
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
@@ -546,14 +550,14 @@ Resources:
           FromPort: '22'
           ToPort: '22'
           CidrIp: !Ref SSHLocation2
-        # - IpProtocol: tcp
-        #   FromPort: '80'
-        #   ToPort: '80'
-        #   CidrIp: !Ref HTTPLocation
-        # - IpProtocol: tcp
-        #   FromPort: '443'
-        #   ToPort: '443'
-        #   CidrIp: !Ref HTTPLocation
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref HTTPLocation
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref HTTPLocation
         - IpProtocol: udp
           FromPort: '5060'
           ToPort: '5060'
@@ -616,6 +620,24 @@ Outputs:
   InstanceId:
     Description: InstanceId of the newly created EC2 instance
     Value: !Ref EC2Instance
+  SiremisURL:
+    Description: URL for Siremis
+    Value: !Sub 'http://${PublicIPAddress}/siremis'
+  SiremisDBUsername:
+    Description: Siremis DB username
+    Value: 'siremis'
+  SiremisDBPassword:
+    Description: Siremis DB password
+    Value: !Sub '${DBPassword}'
+  SIPDBUsername:
+    Description: Kamailio DB username
+    Value: 'kamailio'
+  SIPDBPassword:
+    Description: Kamailio DB password
+    Value: !Sub '${DBPassword}'
+  Note:
+    Description: Set all checkboxes for Siremis installation
+    Value: ''
   # DatabaseHost:
   #   Description: DatabaseHostUrl
   #   Value: !GetAtt MariaDB.Endpoint.Address
