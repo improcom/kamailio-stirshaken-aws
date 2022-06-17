@@ -17,6 +17,8 @@ https://38155eda-a57e-430a-b8d1-9441e91180d3.mock.pstmn.io
 PublicIPAddress - elastic IP address. 
 
 
+## Helpful commands
+kamcmd lcr.reload
 
 ### TODO
 [ ] add CA URL to tags and set env vars from tags

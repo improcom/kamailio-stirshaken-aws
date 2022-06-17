@@ -424,7 +424,7 @@ Resources:
           echo "making secsipid module for kamailio"
           cd /usr/local/src/kamailio/
           make cfg
-          make PREFIX="/usr/local/kamailio-${!KAMAILIO_VERSION}" include_modules="db_mysql dialplan secsipid_proc secsipid auth_identity" cfg
+          make PREFIX="/usr/local/kamailio-${!KAMAILIO_VERSION}" include_modules="db_mysql dialplan secsipid_proc secsipid auth_identity lcr" cfg
           make all
           make install
           make install-systemd-debian
@@ -524,9 +524,10 @@ Resources:
           echo "GRANT ALL ON siremis.* TO 'siremis'@'localhost'" | mysql
           echo "FLUSH PRIVILEGES" | mysql
 
-          echo "Creating drouting DB"
-          cat /usr/local/src/kamailio/utils/kamctl/mysql/drouting-create.sql | mysql kamailio
-          #rm -rf /var/www/html/kamailio/siremis/install
+          echo "Fill DB with lcr example"
+          cd /usr/local/src/kamailio-stirshaken-aws/
+          perl -pi -e "s/SIP_TERMINATING_LOCATION_IP_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/" lcr_example.sql
+          cat lcr_example.sql | mysql kamailio
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
   
