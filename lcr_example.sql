@@ -109,7 +109,7 @@ CREATE TABLE `lcr_rule_target` (
 
 LOCK TABLES `lcr_rule_target` WRITE;
 /*!40000 ALTER TABLE `lcr_rule_target` DISABLE KEYS */;
-INSERT INTO `lcr_rule_target` VALUES (1,1,1,2,3,1),(2,1,1,1,2,1);
+INSERT INTO `lcr_rule_target` VALUES (1,1,1,1,1,1);
 /*!40000 ALTER TABLE `lcr_rule_target` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

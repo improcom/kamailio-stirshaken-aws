@@ -142,7 +142,7 @@ Parameters:
     MaxLength: '255'
     Default: 'mySecureTokenForGeneratingCertificate'
   PrivateKeyPath:
-    Description: Path to ssh private key. Used to generate STIR/SHAKEN certificate.
+    Description: Path to ssh private key. Used to generate STIR/SHAKEN certificate. The key will be generated automatically. Leave it to default.
     Type: String
     MinLength: '1'
     MaxLength: '255'
@@ -521,7 +521,7 @@ Resources:
 
           echo "Fill DB with lcr example"
           cd /usr/local/src/kamailio-stirshaken-aws/
-          perl -pi -e "s/SIP_TERMINATING_LOCATION_IP_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/" lcr_example.sql
+          perl -pi -e "s/SIP_TERMINATING_LOCATION_IP_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/g" lcr_example.sql
           cat lcr_example.sql | mysql kamailio
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
