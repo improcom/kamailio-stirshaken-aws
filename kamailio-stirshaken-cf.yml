@@ -452,20 +452,15 @@ Resources:
 
 
           echo "$(date) creating kamailio db"
-          # echo "CREATE USER 'kamailio'@'localhost' IDENTIFIED BY '${DBPassword}';" | mysql
-          # echo "GRANT ALL PRIVILEGES ON * . * TO 'kamailio'@'localhost';" | mysql
-          # echo "FLUSH PRIVILEGES;" | mysql
-
           cd /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/
           perl -pi -e "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/" kamctlrc
           perl -pi -e "s/# DBRWUSER=\"kamailio\"/DBRWUSER=\"kamailio\"/" kamctlrc
-          perl -pi -e "s/# DBRWPW=\"kamailiorw\"/DBRWPW=\"${DBPassword}\"/" kamctlrc
+          perl -pi -e "s/# DBRWPW=\"KAMAILIO_PASSWORD_TEMPLATE\"/DBRWPW=\"${DBPassword}\"/" kamctlrc
 
           perl -pi -e "s/ISP_ADDRESS_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/" kamailio.cfg
           perl -pi -e "s/PRIVATE_IP_TEMPLATE/${!LOCAL_IPV4}/" kamailio.cfg
           perl -pi -e "s/PUBLIC_IP_TEMPLATE/${!PUBLIC_IPV4}/" kamailio.cfg
-          perl -pi -e "s/kamailio:kamailiorw/kamailio:${DBPassword}/" kamailio.cfg
-          perl -pi -e "s/trydef DBURL/define DBURL/" kamailio.cfg
+          perl -pi -e "s/kamailio:KAMAILIO_PASSWORD_TEMPLATE/kamailio:${DBPassword}/" kamailio.cfg
 
 
           echo "generating ssl keys for secsipidx"
