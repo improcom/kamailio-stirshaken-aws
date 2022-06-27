@@ -1,5 +1,5 @@
 gitignored.txt
 junk/
-local_test_env.sh
+prepare_template_with_local_env_values.sh
 kamailio-stirshaken-cf_READY.yml
 old/
