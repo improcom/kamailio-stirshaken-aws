@@ -523,6 +523,7 @@ Resources:
           cd /usr/local/src/kamailio-stirshaken-aws/
           perl -pi -e "s/SIP_TERMINATING_LOCATION_IP_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/g" lcr_example.sql
           cat lcr_example.sql | mysql kamailio
+          systemctl restart kamailio
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
   
