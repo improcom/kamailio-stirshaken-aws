@@ -23,7 +23,7 @@ Parameters:
       - t3.large
     ConstraintDescription: must be a valid EC2 instance type.
   KeyName:
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
     Type: 'AWS::EC2::KeyPair::KeyName'
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
     AllowedPattern: '.+'
@@ -130,11 +130,11 @@ Parameters:
     Default: 'kamailio-stirshaken'
     ConstraintDescription: must contain only alphanumeric characters.
   CertificateProviderURL:
-    Description: URL of certificate provider API. https://api.ca.transnexus.com/certificates/request
+    Description: URL of certificate provider API. Production link - https://api.ca.transnexus.com/certificates/request
     Type: String
     MinLength: '1'
     MaxLength: '255'
-    Default: 'https://38155eda-a57e-430a-b8d1-9441e91180d3.mock.pstmn.io/certificates/request'
+    Default: 'https://api.ca.transnexus.com/certificates/request'
   CertificateAuthorityToken:
     Description: Certificate authority token
     Type: String
