@@ -620,7 +620,7 @@ Outputs:
     Description: InstanceId of the newly created EC2 instance
     Value: !Ref EC2Instance
   SiremisURL:
-    Description: URL for Siremis. You must restart kamailio (or instance) after setup.
+    Description: URL for Siremis. You must restart kamailio (or instance) after the setup.
     Value: !Sub 'http://${PublicIPAddress}/siremis'
   SiremisDBUsername:
     Description: Siremis DB username
