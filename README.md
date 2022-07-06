@@ -1,7 +1,9 @@
 # Kamailio-STIR/SHAKEN setup
 
-project name: kamailio-stirshaken-A003
----------------------------- 
+##### project name: kamailio-stirshaken-A003
+
+<br>
+
 
 This project installs kamailio with STIR/SHAKEN module secsipidx from asipto.
 https://github.com/asipto/secsipidx
@@ -14,7 +16,7 @@ You must be FCC registered and have valid token from iconectiv to get a certific
 https://38155eda-a57e-430a-b8d1-9441e91180d3.mock.pstmn.io
 
 
-## Cloudformation script parameters description
+## Cloudformation script parameters:
 * CertificateAuthorityToken - **MUST BE UPDATED**. A token from iconectiv. (Service Provider Code (SPC) token received from the STI-PA) (https://ca.transnexus.com/api-documentation https://transnexus.com/sti-ca/)  
 * DBPassword - **default**.
 * CertificateProviderURL - **default**.  https://api.ca.transnexus.com/certificates/request  
