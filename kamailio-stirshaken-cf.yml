@@ -424,7 +424,7 @@ Resources:
           echo "making secsipid module for kamailio"
           cd /usr/local/src/kamailio/
           make cfg
-          make PREFIX="/usr/local/kamailio-${!KAMAILIO_VERSION}" include_modules="db_mysql dialplan secsipid_proc secsipid auth_identity lcr" cfg
+          make PREFIX="/usr/local/kamailio-${!KAMAILIO_VERSION}" include_modules="db_mysql dialplan secsipid_proc secsipid auth_identity lcr outbound" cfg
           make all
           make install
           make install-systemd-debian
@@ -523,6 +523,8 @@ Resources:
           cd /usr/local/src/kamailio-stirshaken-aws/
           perl -pi -e "s/SIP_TERMINATING_LOCATION_IP_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/g" lcr_example.sql
           cat lcr_example.sql | mysql kamailio
+
+          systemctl enable kamailio
           systemctl restart kamailio
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
@@ -618,7 +620,7 @@ Outputs:
     Description: InstanceId of the newly created EC2 instance
     Value: !Ref EC2Instance
   SiremisURL:
-    Description: URL for Siremis
+    Description: URL for Siremis. You must restart kamailio (or instance) after setup.
     Value: !Sub 'http://${PublicIPAddress}/siremis'
   SiremisDBUsername:
     Description: Siremis DB username
@@ -633,7 +635,7 @@ Outputs:
     Description: Kamailio DB password
     Value: !Sub '${DBPassword}'
   Note:
-    Description: Set all checkboxes for Siremis installation
+    Description: Set all checkboxes for Siremis installation.
     Value: ''
   # DatabaseHost:
   #   Description: DatabaseHostUrl
