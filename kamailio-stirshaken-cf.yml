@@ -524,6 +524,9 @@ Resources:
           perl -pi -e "s/SIP_TERMINATING_LOCATION_IP_TEMPLATE/${!SIP_TERMINATING_LOCATION_IP}/g" lcr_example.sql
           cat lcr_example.sql | mysql kamailio
 
+          #update kamailio startup script, so kamailio starts after mysql
+          perl -pi -e "s/After=network-online.target/After=network-online.target mysql.service/" /etc/systemd/system/kamailio.service
+          
           systemctl enable kamailio
           systemctl restart kamailio
 
