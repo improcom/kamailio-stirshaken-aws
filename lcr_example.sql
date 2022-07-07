@@ -79,7 +79,7 @@ CREATE TABLE `lcr_rule` (
 
 LOCK TABLES `lcr_rule` WRITE;
 /*!40000 ALTER TABLE `lcr_rule` DISABLE KEYS */;
-INSERT INTO `lcr_rule` VALUES (1,1,'1917',NULL,NULL,NULL,0,1),(2,1,'1',NULL,NULL,NULL,0,1);
+INSERT INTO `lcr_rule` VALUES (1,1,'1',NULL,NULL,NULL,0,1),(2,1,'1917',NULL,NULL,NULL,0,1);
 /*!40000 ALTER TABLE `lcr_rule` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -109,7 +109,7 @@ CREATE TABLE `lcr_rule_target` (
 
 LOCK TABLES `lcr_rule_target` WRITE;
 /*!40000 ALTER TABLE `lcr_rule_target` DISABLE KEYS */;
-INSERT INTO `lcr_rule_target` VALUES (1,1,1,1,1,1);
+INSERT INTO `lcr_rule_target` VALUES (1,1,1,1,1,1),(2,1,2,1,1,2);
 /*!40000 ALTER TABLE `lcr_rule_target` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

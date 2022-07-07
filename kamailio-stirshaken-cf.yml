@@ -490,7 +490,7 @@ Resources:
           " | /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamdbctl create
           /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamctl address add 200 ${!SIP_SIGNALLING_LOCATION1_IP} ${!SIP_SIGNALLING_LOCATION1_MASK} 5060 "location1"
           /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamctl address add 200 ${!SIP_SIGNALLING_LOCATION2_IP} ${!SIP_SIGNALLING_LOCATION2_MASK} 5060 "location2"
-          /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamctl address add 200 ${!SIP_TERMINATING_LOCATION_IP} 32 5060 "location2"
+          /usr/local/kamailio-${!KAMAILIO_VERSION}/sbin/kamctl address add 200 ${!SIP_TERMINATING_LOCATION_IP} 32 5060 "terminator"
 
           
           systemctl enable kamailio
