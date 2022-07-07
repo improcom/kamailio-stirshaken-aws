@@ -358,7 +358,6 @@ Resources:
           cat > /etc/profile.d/load_env.sh << 'EOF'
           export PROJECT_NAME=${ProjectName}
           export KAMAILIO_VERSION=5.6.0
-          export SIREMIS_VERSION=5.3.0
           export CERTIFICATE_PROVIDER=TransNexus
           export CERTIFICATE_PROVIDER_URL=${CertificateProviderURL}
           export CERTIFICATE_AUTHORITY_TOKEN=${CertificateAuthorityToken}
@@ -510,7 +509,6 @@ Resources:
           cd /var/www/html/
           git clone https://github.com/asipto/siremis kamailio
           cd kamailio
-          git checkout v${!SIREMIS_VERSION}
           make apache24-conf >> /etc/apache2/sites-available/000-default.conf
           make prepare24
           make chown
@@ -622,7 +620,7 @@ Outputs:
     Description: InstanceId of the newly created EC2 instance
     Value: !Ref EC2Instance
   SiremisURL:
-    Description: URL for Siremis. You must restart kamailio (or instance) after the setup.
+    Description: URL for Siremis
     Value: !Sub 'http://${PublicIPAddress}/siremis'
   SiremisDBUsername:
     Description: Siremis DB username
