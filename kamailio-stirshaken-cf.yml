@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: 'Covid2019-automated-dialer-template. Ubuntu 20.04 LTS'
+Description: 'Kamailio-w-stirshaken-from-asipto. Ubuntu 22.04 LTS'
 
 Parameters:
   InstanceType:
