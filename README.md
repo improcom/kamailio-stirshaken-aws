@@ -64,7 +64,10 @@ After install is completed visit CloudFormation stack outputs and visit SiremisU
 If something doesn't work it is advised to check last lines in /var/log/cloud-init-output.log for errors. The installation script is ran with the option "-e", so it will stop if any error happens. Note, that you cannot extract the script from CF template and rerun it directly without modification, as it uses variables from CF template and refers to local variables as #{!var} instead of #{var}.
 
 ### IMPORTANT NOTE
-Public IP association happens during the cloudformation installation and it **does NOT check**  if the server is completely ready. So, if you have the public IP address under production load you must keep that in mind. As a workaround you can set temporary IP address as public and switch the production IP later, after everything is tested.
+Public IP association happens during the cloudformation installation and it **does NOT check**  if the server is completely ready. So, if you have the public IP address under production load you must keep that in mind. As a workaround you can set temporary IP address as public and switch the production IP later, after everything is tested. If you go this way do not forget that you also need to update this line in /usr/local/kamailio-5.6.0/etc/kamailio/kamailio.cfg  
+``listen=udp:MY_PRIVATE_IP:5060 advertise MY_PUBLIC_IP:5060``    
+and restart kamailio  
+``systemctl restart kamailio``
 
 ### Worth to know
 CDR information is loaded into Siremis with 5 a minute delay. (Accounting Services -> CDR List).  
