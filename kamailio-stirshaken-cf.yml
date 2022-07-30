@@ -369,6 +369,10 @@ Resources:
           export LOCALITY_4_CSR=${STIRSHAKENcaLocality}
           export ORGANIZATION_4_CSR=${STIRSHAKENcaOrganization}
           export ORGUNIT_4_CSR=${STIRSHAKENcaOrgUnit}
+          export CDRROTATE_LOG=/var/log/cdrrotate.log
+          export DB_USER=kamailio
+          export DB_PASS=${DBPassword}
+          export DB_NAME=kamailio
           EOF
           chmod a+x /etc/profile.d/load_env.sh
           source /etc/profile.d/load_env.sh
