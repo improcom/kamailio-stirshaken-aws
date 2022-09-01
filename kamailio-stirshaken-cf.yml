@@ -534,6 +534,14 @@ Resources:
           systemctl enable kamailio
           systemctl restart kamailio
 
+          echo "installing peeringhub client"
+          apt-get install docker docker.io -y  //peering hub client works only in RHEL
+          cd /usr/local/src/
+          git clone https://github.com/peeringhub/RHEL-ACME-Cllient.git
+
+          
+
+
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
   
   AssignRole:

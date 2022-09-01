@@ -1,5 +1,6 @@
 gitignored.txt
 junk/
 prepare_template_with_local_env_values.sh
-kamailio-stirshaken-cf_READY.yml
+kamailio-stirshaken-cf_READY-east-2.yml
+kamailio-stirshaken-cf_READY-west-2.yml
 old/
