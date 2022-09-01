@@ -338,7 +338,7 @@ Resources:
                 Action:
                   - "S3:*"
                 Resource:
-                  - !Sub "arn:aws:s3:${AWS::Region}:${AWS::AccountId}:stirshakencertificates-${ProjectName}"
+                  - !Sub "arn:aws:s3:::stirshakencertificates-${ProjectName}"
   
   S3Bucket4StirShakenCertificates:
     Type: 'AWS::S3::Bucket'
@@ -418,13 +418,12 @@ Resources:
           export DB_USER=kamailio
           export DB_PASS=${DBPassword}
           export DB_NAME=kamailio
-          export STIPASPCode=$(STIPASPCode)
-          export STIPAAPILogin=$(STIPAAPILogin)
-          export STIPAAPIPassword=$(STIPAAPIPassword)
+          export STIPASPCode=${STIPASPCode}
+          export STIPAAPILogin=${STIPAAPILogin}
+          export STIPAAPIPassword=${STIPAAPIPassword}
           export S3BucketName=stirshakencertificates-${ProjectName}
-
-
           EOF
+
           chmod a+x /etc/profile.d/load_env.sh
           source /etc/profile.d/load_env.sh
 
@@ -437,13 +436,7 @@ Resources:
 
           apt update
           apt-get install mysql-server -y
-
           apt-get install secsipidx libsecsipid-dev ngrep jq -y
-
-
-          # echo "install kamailio from packages"
-          # apt-get install kamailio* -y //TODO - install only necessary modules
-
 
           echo "installing dependencies for kamailio source code"
           apt-get install build-essential bison flex pkg-config libpcre3-dev libxml2-dev libcurl4-openssl-dev libssl-dev make libmysqlclient-dev gcc g++ -y
@@ -454,9 +447,8 @@ Resources:
           cd kamailio
           git checkout ${!KAMAILIO_VERSION}
 
-
-          cd /usr/local/src/
           echo "installing golang"
+          cd /usr/local/src/
           wget https://go.dev/dl/go1.18.2.linux-amd64.tar.gz
           rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.2.linux-amd64.tar.gz
           export PATH=$PATH:/usr/local/go/bin
@@ -541,8 +533,8 @@ Resources:
           echo "Preparing acme config"
           cd kamailio-stirshaken-aws/conf/
           perl -pi -e "s|TEMPLATE_COMPANY_NAME|${!ORGANIZATION_4_CSR}|" acme_client.conf
-          perl -pi -e "s|TEMPLATE_STIPA_API_LOGIN|${!STIPAAPILogin}|" acme_client.conf
-          perl -pi -e "s|TEMPLATE_STIPA_API_PASSWORD|${!STIPAAPIPassword}|" acme_client.conf
+          perl -pi -e "s|TEMPLATE_STI_API_LOGIN|${!STIPAAPILogin}|" acme_client.conf
+          perl -pi -e "s|TEMPLATE_STI_API_PASSWORD|${!STIPAAPIPassword}|" acme_client.conf
           cp acme_client.conf /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
           cp Dockerfile /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
 
