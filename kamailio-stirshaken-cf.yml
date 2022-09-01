@@ -170,11 +170,23 @@ Parameters:
   STIRSHAKENcaOrganization:
     Description: Organization for StirShaken certificate.
     Type: String
-    Default: Example Company INC
+    Default: Example_Company_INC
   STIRSHAKENcaOrgUnit:
     Description: Organization Unit for StirShaken certificate.
     Type: String
     Default: IT
+  STIPASPCode:
+    Description: Service Provider Code (OCN). Iconectiv Service Provider account ID (4 alnum characters, e.g. 123H)
+    Type: String
+    Default: SPC_VALUE
+  STIPAAPILogin:
+    Description: STI-PA (iconectiv) API login.
+    Type: String
+    Default: STIPA_API_LOGIN
+  STIPAAPIPassword:
+    Description: STI-PA (iconectiv) API password.
+    Type: String
+    Default: STIPA_API_PASSWORD
 
 Mappings:
   AWSInstanceType2Arch:
@@ -318,10 +330,43 @@ Resources:
                   - "SES:SendRawEmail"
                 Resource:
                   - !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity:*"
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "S3:*"
+                Resource:
+                  - !Sub "arn:aws:s3:${AWS::Region}:${AWS::AccountId}:stirshakencertificates-${ProjectName}"
+  
+  S3Bucket4StirShakenCertificates:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub "stirshakencertificates-${ProjectName}"
+      AccessControl: PublicRead
+  BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      PolicyDocument:
+        Id: StirShakenCertsPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket4StirShakenCertificates
+                - /*
+      Bucket: !Ref S3Bucket4StirShakenCertificates
+
   EC2Instance:
     Type: AWS::EC2::Instance
     DependsOn: 
-      # - MariaDB
+      - S3Bucket4StirShakenCertificates
       - InstanceAndDBSecurityGroup
     Properties:
       BlockDeviceMappings:
@@ -373,6 +418,12 @@ Resources:
           export DB_USER=kamailio
           export DB_PASS=${DBPassword}
           export DB_NAME=kamailio
+          export STIPASPCode=$(STIPASPCode)
+          export STIPAAPILogin=$(STIPAAPILogin)
+          export STIPAAPIPassword=$(STIPAAPIPassword)
+          export S3BucketName=stirshakencertificates-${ProjectName}
+
+
           EOF
           chmod a+x /etc/profile.d/load_env.sh
           source /etc/profile.d/load_env.sh
@@ -467,7 +518,7 @@ Resources:
           perl -pi -e "s/kamailio:KAMAILIO_PASSWORD_TEMPLATE/kamailio:${DBPassword}/" kamailio.cfg
 
 
-          echo "generating ssl keys for secsipidx"
+          echo "generating ssl keys for secsipidx and peeringhub"
           cd /usr/local/kamailio-${!KAMAILIO_VERSION}
           mkdir stirshakendata
           cd stirshakendata
@@ -476,13 +527,56 @@ Resources:
           chown kamailio:kamailio *
 
           echo "generating certificate request and getting certificate from CERTIFICATE PROVIDER"
-          cd /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/
-          CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
-          if [[ $? -ne 0 ]]; then
-            echo "$(date) - Cannot get certificate" > /var/log/${!PROJECT_NAME}_install.log
-          fi
+          
+          echo "installing peeringhub client"
+          ## peering hub client works only in RHEL, so we need to install docker as workaround to run peeringhub acme client
+          apt-get install docker docker.io -y
+          
+          cd /usr/local/src/
+          #TODO - to vendor ACME CLIENT or not to vendor. server_url inside acme_client.conf can change.
+          git clone https://github.com/peeringhub/RHEL-ACME-Cllient.git
+          chmod +x RHEL-ACME-Cllient/dnl_acme_client
+          cp RHEL-ACME-Cllient/dnl_acme_client /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+
+          echo "Preparing acme config"
+          cd kamailio-stirshaken-aws/conf/
+          perl -pi -e "s|TEMPLATE_COMPANY_NAME|${!ORGANIZATION_4_CSR}|" acme_client.conf
+          perl -pi -e "s|TEMPLATE_STIPA_API_LOGIN|${!STIPAAPILogin}|" acme_client.conf
+          perl -pi -e "s|TEMPLATE_STIPA_API_PASSWORD|${!STIPAAPIPassword}|" acme_client.conf
+          cp acme_client.conf /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+          cp Dockerfile /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+
+          cd ../utils/
+          perl -pi -e "s|TEMPLATE_SPC_VALUE|${!STIPASPCode}|" get_spc_and_certificate.sh
+          perl -pi -e "s|TEMPLATE_COUNTRY_4_CSR|${!COUNTRY_4_CSR}|" get_spc_and_certificate.sh
+          perl -pi -e "s|TEMPLATE_PROVINCE_4_CSR|${!PROVINCE_4_CSR}|" get_spc_and_certificate.sh
+          perl -pi -e "s|TEMPLATE_LOCALITY_4_CSR|${!LOCALITY_4_CSR}|" get_spc_and_certificate.sh
+          perl -pi -e "s|TEMPLATE_ORGANIZATION_4_CSR|${!ORGANIZATION_4_CSR}|" get_spc_and_certificate.sh
+
+          cp get_spc_and_certificate.sh /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+
+          echo "Run docker and generate SPC and certificate via Peeringhub"
+          cd /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+          docker build -t peeringhub_img .
+          docker run -d --mount type=bind,source="$(pwd)",target=/app --name peeringhub peeringhub_img;
+
+
+          echo "Upload certificate to AWS"
+          apt-get install awscli -y
+          aws s3api put-object --bucket ${!S3BucketName} --key ${!STIPASPCode}.crt --content-type binary/octet-stream --body ${!STIPASPCode}.crt
+          CERTIFICATE_URL="https://${!S3BucketName}.s3.$(curl http://169.254.169.254/latest/meta-data/placement/region).amazonaws.com/${!STIPASPCode}.crt
+
+
+          #secsipid_add_identity("$fU", "$rU", "A", "", "https://stirshakenimprocom.s3.us-east-2.amazonaws.com/146K.crt", "/usr/local/kamailio-5.6.0/stirshakendata/ec256-private.pem");
+
+          #cd /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/
+          #CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
+          #if [[ $? -ne 0 ]]; then
+          #  echo "$(date) - Cannot get certificate" > /var/log/${!PROJECT_NAME}_install.log
+          #fi
+
           perl -pi -e "s|CERTIFICATE_URL_TEMPLATE|${!CERTIFICATE_URL}|" kamailio.cfg
-          perl -pi -e "s|PRIVATE_KEY_PATH_TEMPLATE|${!PRIVATE_KEY_PATH_4_CSR}|" kamailio.cfg
+          perl -pi -e "s|PRIVATE_KEY_PATH_TEMPLATE|/usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/ec256-private.pem|" kamailio.cfg
 
 
           echo "configuring kamailio - post-install"
@@ -533,11 +627,6 @@ Resources:
           
           systemctl enable kamailio
           systemctl restart kamailio
-
-          echo "installing peeringhub client"
-          apt-get install docker docker.io -y  //peering hub client works only in RHEL
-          cd /usr/local/src/
-          git clone https://github.com/peeringhub/RHEL-ACME-Cllient.git
 
           
 
