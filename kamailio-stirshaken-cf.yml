@@ -178,7 +178,7 @@ Parameters:
   STIPASPCode:
     Description: Service Provider Code (OCN). Iconectiv Service Provider account ID (4 alnum characters, e.g. 123H)
     Type: String
-    Default: SPC_VALUE
+    Default: SPC_OCN_VALUE
   STIPAAPILogin:
     Description: STI-PA (iconectiv) API login.
     Type: String
@@ -539,16 +539,17 @@ Resources:
           cp Dockerfile /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
 
           cd ../utils/
-          perl -pi -e "s|TEMPLATE_SPC_VALUE|${!STIPASPCode}|" get_spc_and_certificate.sh
-          perl -pi -e "s|TEMPLATE_COUNTRY_4_CSR|${!COUNTRY_4_CSR}|" get_spc_and_certificate.sh
-          perl -pi -e "s|TEMPLATE_PROVINCE_4_CSR|${!PROVINCE_4_CSR}|" get_spc_and_certificate.sh
-          perl -pi -e "s|TEMPLATE_LOCALITY_4_CSR|${!LOCALITY_4_CSR}|" get_spc_and_certificate.sh
-          perl -pi -e "s|TEMPLATE_ORGANIZATION_4_CSR|${!ORGANIZATION_4_CSR}|" get_spc_and_certificate.sh
+          perl -pi -e "s|TEMPLATE_SPC_VALUE|${!STIPASPCode}|" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_COUNTRY_4_CSR|${!COUNTRY_4_CSR}|" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_PROVINCE_4_CSR|${!PROVINCE_4_CSR}|" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_LOCALITY_4_CSR|${!LOCALITY_4_CSR}|" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_ORGANIZATION_4_CSR|${!ORGANIZATION_4_CSR}|" get_spc_and_certificate_in_docker.sh
 
-          cp get_spc_and_certificate.sh /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+          cp get_spc_and_certificate_in_docker.sh /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
 
           echo "Run docker and generate SPC and certificate via Peeringhub"
           cd /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
+          chmod +x get_spc_and_certificate_in_docker.sh
           docker build -t peeringhub_img .
           docker run -d --mount type=bind,source="$(pwd)",target=/app --name peeringhub peeringhub_img;
 
