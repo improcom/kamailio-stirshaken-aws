@@ -185,6 +185,7 @@ Parameters:
     Default: STIPA_API_LOGIN
   STIPAAPIPassword:
     Description: STI-PA (iconectiv) API password.
+    NoEcho: 'true'
     Type: String
     Default: STIPA_API_PASSWORD
 
@@ -532,18 +533,18 @@ Resources:
 
           echo "Preparing acme config"
           cd kamailio-stirshaken-aws/conf/
-          perl -pi -e "s|TEMPLATE_COMPANY_NAME|${!ORGANIZATION_4_CSR}|" acme_client.conf
-          perl -pi -e "s|TEMPLATE_STI_API_LOGIN|${!STIPAAPILogin}|" acme_client.conf
-          perl -pi -e "s|TEMPLATE_STI_API_PASSWORD|${!STIPAAPIPassword}|" acme_client.conf
+          perl -pi -e "s|TEMPLATE_COMPANY_NAME|${!ORGANIZATION_4_CSR}|g" acme_client.conf
+          perl -pi -e "s|TEMPLATE_STI_API_LOGIN|${!STIPAAPILogin}|g" acme_client.conf
+          perl -pi -e "s|TEMPLATE_STI_API_PASSWORD|${!STIPAAPIPassword}|g" acme_client.conf
           cp acme_client.conf /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
           cp Dockerfile /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
 
           cd ../utils/
-          perl -pi -e "s|TEMPLATE_SPC_VALUE|${!STIPASPCode}|" get_spc_and_certificate_in_docker.sh
-          perl -pi -e "s|TEMPLATE_COUNTRY_4_CSR|${!COUNTRY_4_CSR}|" get_spc_and_certificate_in_docker.sh
-          perl -pi -e "s|TEMPLATE_PROVINCE_4_CSR|${!PROVINCE_4_CSR}|" get_spc_and_certificate_in_docker.sh
-          perl -pi -e "s|TEMPLATE_LOCALITY_4_CSR|${!LOCALITY_4_CSR}|" get_spc_and_certificate_in_docker.sh
-          perl -pi -e "s|TEMPLATE_ORGANIZATION_4_CSR|${!ORGANIZATION_4_CSR}|" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_SPC_VALUE|${!STIPASPCode}|g" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_COUNTRY_4_CSR|${!COUNTRY_4_CSR}|g" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_PROVINCE_4_CSR|${!PROVINCE_4_CSR}|g" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_LOCALITY_4_CSR|${!LOCALITY_4_CSR}|g" get_spc_and_certificate_in_docker.sh
+          perl -pi -e "s|TEMPLATE_ORGANIZATION_4_CSR|${!ORGANIZATION_4_CSR}|g" get_spc_and_certificate_in_docker.sh
 
           cp get_spc_and_certificate_in_docker.sh /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
 
@@ -551,10 +552,15 @@ Resources:
           cd /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
           chmod +x get_spc_and_certificate_in_docker.sh
           docker build -t peeringhub_img .
-          docker run -d --mount type=bind,source="$(pwd)",target=/app --name peeringhub peeringhub_img;
+          docker run --mount type=bind,source="$(pwd)",target=/app --name peeringhub peeringhub_img;
 
 
           echo "Upload certificate to AWS"
+          if [[ ! -s TEMPLATE_SPC_VALUE.crt ]]; then
+            echo "SPC token is empty. Exiting."
+            exit 1
+          fi
+
           apt-get install awscli -y
           aws s3api put-object --bucket ${!S3BucketName} --key ${!STIPASPCode}.crt --content-type binary/octet-stream --body ${!STIPASPCode}.crt
           CERTIFICATE_URL="https://${!S3BucketName}.s3.$(curl http://169.254.169.254/latest/meta-data/placement/region).amazonaws.com/${!STIPASPCode}.crt
