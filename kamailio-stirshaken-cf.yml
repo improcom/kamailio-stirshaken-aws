@@ -346,6 +346,7 @@ Resources:
     Properties:
       BucketName: !Sub "stirshakencertificates-${ProjectName}"
       AccessControl: PublicRead
+
   BucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
@@ -404,7 +405,7 @@ Resources:
           cat > /etc/profile.d/load_env.sh << 'EOF'
           export PROJECT_NAME=${ProjectName}
           export KAMAILIO_VERSION=5.6.0
-          export CERTIFICATE_PROVIDER=TransNexus
+          export CERTIFICATE_PROVIDER=peeringhub
           export CERTIFICATE_PROVIDER_URL=${CertificateProviderURL}
           export CERTIFICATE_AUTHORITY_TOKEN=${CertificateAuthorityToken}
           export PRIVATE_KEY_PATH_4_CSR=${PrivateKeyPath}
@@ -423,6 +424,8 @@ Resources:
           export STIPAAPILogin=${STIPAAPILogin}
           export STIPAAPIPassword=${STIPAAPIPassword}
           export S3BucketName=stirshakencertificates-${ProjectName}
+
+          echo \"kamailio logger located in /var/log/syslog\" 
           EOF
 
           chmod a+x /etc/profile.d/load_env.sh
@@ -546,6 +549,16 @@ Resources:
           perl -pi -e "s|TEMPLATE_LOCALITY_4_CSR|${!LOCALITY_4_CSR}|g" get_spc_and_certificate_in_docker.sh
           perl -pi -e "s|TEMPLATE_ORGANIZATION_4_CSR|${!ORGANIZATION_4_CSR}|g" get_spc_and_certificate_in_docker.sh
 
+
+          ## option to get certificate via secsipd. TODO
+          ## we need to export PRIVATE_KEY_PATH as it should be used by secsipidx.
+          #export PRIVATE_KEY_PATH=/usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/ec256-private.pem
+          #CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
+          #if [[ $? -ne 0 ]]; then
+          #  echo "$(date) - Cannot get certificate" > /var/log/${!PROJECT_NAME}_install.log
+          #fi
+
+
           cp get_spc_and_certificate_in_docker.sh /usr/local/kamailio-${!KAMAILIO_VERSION}/stirshakendata/
 
           echo "Run docker and generate SPC and certificate via Peeringhub"
@@ -564,12 +577,6 @@ Resources:
           apt-get install awscli -y
           aws s3api put-object --bucket ${!S3BucketName} --key ${!STIPASPCode}.crt --content-type binary/octet-stream --body ${!STIPASPCode}.crt
           CERTIFICATE_URL="https://${!S3BucketName}.s3.$(curl http://169.254.169.254/latest/meta-data/placement/region).amazonaws.com/${!STIPASPCode}.crt
-
-
-          #CERTIFICATE_URL=$( /usr/local/bin/secsipidx --getcertificate | jq -r '.certificate.certificate_url' )
-          #if [[ $? -ne 0 ]]; then
-          #  echo "$(date) - Cannot get certificate" > /var/log/${!PROJECT_NAME}_install.log
-          #fi
 
           cd /usr/local/kamailio-${!KAMAILIO_VERSION}/etc/kamailio/
           perl -pi -e "s|CERTIFICATE_URL_TEMPLATE|${!CERTIFICATE_URL}|" kamailio.cfg
@@ -625,7 +632,7 @@ Resources:
           systemctl enable kamailio
           systemctl restart kamailio
 
-          
+    
 
 
         # - DBHost: !GetAtt MariaDB.Endpoint.Address
